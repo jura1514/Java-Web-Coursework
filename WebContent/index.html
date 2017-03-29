@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Find-My-Friends Wed App</title>
+<!-- Bootstrap -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<script type="text/javascript" charset="utf8" src="http://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script> 
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+
+<script src="//cdn.jsdelivr.net/bluebird/3.5.0/bluebird.min.js"></script>
+
+<!-- The following line loads the Google Map API -->
+<script src="https://maps.google.com/maps/api/js?key=AIzaSyCaSA7xWB3RTe30NxoeTnY3eD4e1EQOJPs"></script>
+
+<!-- Load local CSS and JavaScript. -->
+<link rel="stylesheet" href="css/index.css">
+<script src="js/index.js"></script>
+</head>
+<body>
+<div class="container">
+	
+	<section>
+			My ID:
+			<input class="form-control" type="text" id="myId">
+			<button class="btn btn-default" id="logIn">Go!</button>
+	</section>
+	
+  	<h5>Logged in As:</h5>
+  		<div id="panel" class="panel panel-default">
+    		<div class="panel-body" id="loggedUser"></div>
+  		</div>
+	
+	<br></br>
+	<!--<h3>My Account</h3>-->
+	<ul  class="nav nav-tabs nav-justified">
+			<li>
+				<a data-toggle="tab" href="#-1" ><i class="glyphicon glyphicon-user"></i> Friends</a>
+			</li>
+			<li >
+				<a data-toggle="tab" href="#-2" ><i class="glyphicon glyphicon-star"></i> Subscription</a>
+			</li>
+	</ul>
+		
+	<div class="tab-content">
+	<div id="-1" class="tab-pane fade in active">
+	<h5>Check in</h5>
+		
+	<section id="checkinDetails">
+	
+	<section>
+			Longitude:
+			<input class="form-control" type="text" id="longitude">
+			Latitude:
+			<input class="form-control" type="text" id="latitude">
+			<button class="btn btn-default" id="checkIn">Check in</button>
+	</section>
+	
+	</section>
+	
+	<section id="listOfSubs">
+		<h5>Friend(s) subscribed</h5>
+		<!-- Button for refresh. -->
+		<button class="btn btn-default" id="refreshSubscriptions">Refresh</button>
+		
+		<!-- Initially the list is empty. We will construct it using Ajax. -->
+		<ul id="subscriptions">
+		</ul>
+	</section>
+	
+	<!-- Section for showing Google Map. Empty for the moment. It will be populated by JS. -->
+	<section id="map">
+	</section>
+	
+	</div>
+	
+	<div id="-2" class="tab-pane fade">
+	<h5>Request Subscription</h5>
+	
+	<section>
+			Send request to::
+			<input class="form-control" type="text" id="request">
+			<button class="btn btn-default" id="sendReq">Send Request</button>
+	</section>
+	<h5>Incoming Request(s)</h5>
+	
+	<section id="requestDetails">
+		<section>
+			<button class="btn btn-default" id="refreshRequests">Refresh</button>
+		</section>
+		
+		<!-- Initially the list is empty. We will construct it using Ajax. -->
+		<ul id="requests">
+		</ul>
+		
+		<!-- Buttons for saving/cancelling. -->
+		<section>
+			<button class="btn btn-default" id="approveRequest">Approve</button>
+			<button class="btn btn-default" id="denyRequest">Deny</button>
+		</section>
+	</section>
+		
+	</div>
+	
+	</div>
+	
+	
+</div>
+</body>
+</html>

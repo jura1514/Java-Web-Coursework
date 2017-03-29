@@ -1,0 +1,25 @@
+body
+{
+font-family: Arial;
+}
+
+#map
+{
+width: 100%;
+height: 300px;
+}
+
+#longitude, #latitude, #myId, #request
+{
+width: 20%;
+display: inline-block;
+}
+
+#panel {
+	width: 20%;	
+}
+
+h5
+{
+font-weight: bold;
+}
