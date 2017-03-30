@@ -59,6 +59,112 @@ $("#sendReq").click(function()
 		}
 	);
 
+$("#refreshRequests").click(function()
+		{
+			populateRequests();
+		}
+	);
+$("#denyRequest").click(function()
+		{
+		var selectedReqs = $('#requests input:checked').map(function() {
+		    return this.id;
+		}).toArray();
+		
+		var arrayLength = selectedReqs.length;
+		
+		if( !selectedReqs )
+			{
+				alert("Select request!");
+			}
+		else
+			{
+				for( var i=0; i<arrayLength; i++ )
+					{
+						deleteRequest(selectedReqs[i]);
+					}
+			}
+	
+		}
+	);
+$("#approveRequest").click(function()
+		{
+		var selectedReqs = $('#requests input:checked').map(function() {
+		    return this.id;
+		}).toArray();
+		
+		var arrayLength = selectedReqs.length;
+		
+		if( arrayLength > 0 )
+			{
+				for( var i=0; i<arrayLength; i++ )
+				{
+					(function(counter) {
+						getSubscription(selectedReqs[counter]).then(function(response) {
+							  if (response) {
+								  approveSubscription(selectedReqs[counter]);
+							  } else {
+							  }
+							}).catch(function(e) {
+							  console.error('Error!');
+							  console.error(e);
+							});
+					}(i));
+				}
+			}
+		else
+			{
+				alert("Select request!");
+			}
+		}
+	);
+}
+
+function getSubscription(id)
+{
+
+var url=baseURL+"/subscription/"+id;
+
+return new Promise(function(resolve, reject) {
+    $.getJSON(url, function(jsonData) {
+      if ( !jsonData ) {
+        resolve(true);
+      } else {
+  		alert("Subscription for: "+id+" already exist! Please deny! ");
+        resolve(false);
+      }
+    }).fail(reject);
+  });
+}
+
+function approveSubscription(id)
+{
+	
+var requestName=$("#request").val();
+var url=baseURL+"/subscription";
+var data={	"subscriber":id,
+			"subscribeTo": loggedUser
+		}
+
+$.post(	url,
+		data,
+		function()	
+		{
+		alert("Request for : "+id+" approved! ");
+		$("#"+id ).remove();
+		deleteRequest(id);
+		}
+	);
+}
+
+function deleteRequest(id)
+{
+var selectedId = id;
+$("#"+id ).remove();
+	
+var url=baseURL+"/request/"+loggedUser+"/"+selectedId;
+var settings={type:"DELETE"};
+
+$.ajax(url,settings);
 }
 
 function getRequest()
@@ -129,6 +235,39 @@ $.post(	url,
 		{
 		alert("User saved: "+name+" ");
 		$( ".panel-body" ).append( "User: " +loggedUser+"" );
+		}
+	);
+}
+
+function populateRequests()
+{
+var url=baseURL+"/request/"+loggedUser;
+
+$.getJSON(url,
+		function(requests)
+		{
+		$("#requests").empty();
+		if( !requests )
+		{
+			var htmlCode="<li>No incoming requests</li>";
+			$("#requests").append(htmlCode);
+		}
+		else
+		{
+			for (var i in requests)
+			{
+					var req=requests[i];
+					var subscriberTo=req["subscribeTo"];
+					var subscriberId=req["subscriberId"];
+					var timeStamp = req["timeStamp"];
+					var time = new Date(timeStamp);
+					var date = new Date(time);
+					
+					var htmlCode="<div id="+subscriberId+" class='checkbox'><label class='checkbox-inline'><input id="+subscriberId+" type='checkbox'>"+subscriberId+" (requested at:"+date+")</label></div>";
+
+					$("#requests").append(htmlCode);
+			}
+		}
 		}
 	);
 }
