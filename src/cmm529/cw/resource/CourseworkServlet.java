@@ -7,13 +7,22 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.amazonaws.services.dynamodbv2.*;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.transactions.TransactionManager;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import cmm529.coursework.friend.model.*;
 import cmm529.cw.DynamoDBUtil;
@@ -104,6 +113,74 @@ public class CourseworkServlet {
 			{
 			return Response.status(400).entity("error in saving user").build();
 			}
+	}
+	
+	@Path("/subscribedto/{id}")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Collection<User> getListOfSubscribedUsers(@PathParam("id") String id)
+	{
+		List<User> listOfSortedUsers =  new ArrayList<User>();
+		List<Subscription> listOfSortedSubscriptions =  new ArrayList<Subscription>();
+	   // User user = null;
+		
+		DynamoDBMapper mapper=DynamoDBUtil.getMapper();	
+	    
+	    DynamoDBScanExpression scanSubscriptionExpression = new DynamoDBScanExpression();
+	    List<Subscription> listOfSubscriptions = mapper.scan(Subscription.class, scanSubscriptionExpression);
+	    
+	    DynamoDBScanExpression scanUserExpression = new DynamoDBScanExpression();
+	    List<User> listOfUsers = mapper.scan(User.class, scanUserExpression);
+	    
+		if( listOfSubscriptions.size() > 0 )
+		{
+			for( int i = 0; i < listOfSubscriptions.size(); i++ )
+			{
+				if( listOfSubscriptions.get(i).getSubscribeTo().toString().contains(id) )
+					{
+						Subscription sub = listOfSubscriptions.get(i);
+						listOfSortedSubscriptions.add(sub);
+					}
+			}
+		}
+		
+		if( listOfSortedSubscriptions.size() > 0 )
+		{
+			for( int i = 0; i < listOfSortedSubscriptions.size(); i++ )
+			{
+				for( int k = 0; k < listOfUsers.size(); k++ )
+				{
+					if( listOfSortedSubscriptions.get(i).getSubscriberId().compareTo(listOfUsers.get(k).getId()) == 0 )
+					{
+						User user = listOfUsers.get(k);
+						listOfSortedUsers.add(user);
+					}
+				}
+			}
+		}
+	    
+	    return listOfSortedUsers;
+	}
+	
+	@Path("/location/{id}")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getLocationString(@PathParam("id") String id)
+	{
+	DynamoDBMapper mapper=DynamoDBUtil.getMapper();
+	User user=mapper.load(User.class,id);
+	
+	LocationTypeConverter locConverter = new LocationTypeConverter();
+	String locString;
+	
+	locString = locConverter.convert(user.getLocation());
+
+	if( locString.isEmpty())
+	{
+		throw new WebApplicationException(404);
+	}
+	
+	return locString;
 	}
 	
 }

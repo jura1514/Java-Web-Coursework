@@ -25,7 +25,7 @@ var marker=makeMarker(map,0.0,0.0);	//make marker on map, keeping reference
 
 $("#checkIn").click(function()
 		{
-		  updateUser();
+		  updateUser(marker.getPosition());
 		}
 	);
 
@@ -64,6 +64,13 @@ $("#refreshRequests").click(function()
 			populateRequests();
 		}
 	);
+
+$("#refreshSubscriptions").click(function()
+		{
+			populateSubscribers();
+		}
+	);
+
 $("#denyRequest").click(function()
 		{
 		var selectedReqs = $('#requests input:checked').map(function() {
@@ -117,6 +124,7 @@ $("#approveRequest").click(function()
 			}
 		}
 	);
+
 }
 
 function getSubscription(id)
@@ -272,12 +280,86 @@ $.getJSON(url,
 	);
 }
 
-function updateUser()
+function populateSubscribers()
 {
-//var longitude=position.lng();
-//var latitude=position.lat();
-var longitude=$("#longitude").val();
-var latitude=$("#latitude").val();
+var url=baseURL+"/user/subscribedto/"+loggedUser;
+
+$.getJSON(url,
+		function(users)
+		{
+		$("#subscriptions").empty();
+			if( !users )
+			{
+				var htmlCode="<li>No Friend(s) subscribed</li>";
+				$("#subscriptions").append(htmlCode);
+			}
+			else
+			{
+				for (var i in users)
+				{
+						var user=users[i];
+						var id=user["id"];
+						
+						var timeStamp = user["lastUpdated"];
+						var time = new Date(timeStamp);
+						var date = new Date(time);
+						
+						var htmlCode="<div id="+id+" class='radio'><label><input id="+id+" type='radio' name='optradio'>"+id+" (requested at:"+date+")</label></div>";
+	
+						$("#subscriptions").append(htmlCode);
+				}
+				
+				$("#subscriptions input[name='optradio']").click(function()
+						{
+							getUserLocation($(this).attr("id"));
+						}
+				);
+			}
+		}
+	);
+}
+
+function getUserLocation(id)
+{
+
+var url=baseURL+"/user/location/"+id;
+
+$.getJSON(	url,
+		function(jsonData)
+		{
+		if( !jsonData )
+			{
+			alert("This user haven't checked in yet!")
+			}
+		else
+			{
+			alert("awdawadd");
+			alert(jsonData);
+		//	var fields = jsonData.split(',');
+		//	alert(fields);
+			}
+		
+//		var fields = jsonData.split(',');
+//		alert(fields);
+//		var longitude=fields[0];
+//		var latitude=fields[1];
+//		
+//		var latv=parseFloat(latitude);
+//		var lonv=parseFloat(longitude);
+//		
+//		myLatlng = new google.maps.LatLng(latv,lonv);
+//		
+//		marker.setPosition(myLatlng);
+		}
+	);
+}
+
+function updateUser(position)
+{
+var longitude=position.lng();
+var latitude=position.lat();
+//var longitude=$("#longitude").val();
+//var latitude=$("#latitude").val();
 
 var name=$("#myId").val();
 
@@ -326,5 +408,21 @@ var location=new google.maps.LatLng(latitude,longitude);	//create location from 
 var marker=new google.maps.Marker({	"position":location,	//mark options as a map
 									"map":map,
 									"draggable":true});
+
+google.maps.event.addListener(marker, 'click', function (event) {
+    document.getElementById("latitude").value = event.latLng.lat();
+    document.getElementById("longitude").value = event.latLng.lng();
+});
+
+google.maps.event.addListener(marker, 'click', function (event) {
+    document.getElementById("latitude").value = this.getPosition().lat();
+    document.getElementById("longitude").value = this.getPosition().lng();
+});
+
+google.maps.event.addListener(marker, 'dragend', function (event) {
+    document.getElementById("latitude").value = this.getPosition().lat();
+    document.getElementById("longitude").value = this.getPosition().lng();
+});
+
 return marker;	//return marker object
 } //end function
