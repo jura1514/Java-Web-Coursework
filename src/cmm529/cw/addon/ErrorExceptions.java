@@ -1,4 +1,4 @@
-package cmm529.cw;
+package cmm529.cw.addon;
 
 @SuppressWarnings("serial")
 public class ErrorExceptions extends Exception {

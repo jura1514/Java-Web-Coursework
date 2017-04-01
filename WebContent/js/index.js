@@ -3,6 +3,11 @@ var openWeatherAPIKey="AIzaSyCaSA7xWB3RTe30NxoeTnY3eD4e1EQOJPs";
 var baseURL="api";
 var loggedUser;
 
+var markers = [];
+var markerUser;
+var map;
+
+
 //the document ready function
 try	{
 	$(function()
@@ -20,54 +25,113 @@ try	{
 //
 function init()
 {
-var map=makeMap("map",1,0.0,0.0);	//make Google map
-var marker=makeMarker(map,0.0,0.0);	//make marker on map, keeping reference
+refreshMap();
 
 $("#checkIn").click(function()
 		{
-		  updateUser(marker.getPosition());
+			if( loggedUser )
+			{
+				if( ( $("#longitude").val().length > 0 ) && ( $("#latitude").val().length > 0 ) )
+				{
+					if( ($.isNumeric($("#longitude").val())) && ($.isNumeric($("#latitude").val())) )
+						{					
+							updateUser(markerUser.getPosition());
+						}
+					else
+						{
+							alert("Latitude and longitude should be numeric !");
+						}
+				}
+				else
+				{
+					alert("Enter latitude and longitude!");
+				}
+			}
+			else
+			{
+				alert("Log in first!");
+			}
 		}
 	);
 
 $("#logIn").click(function()
 		{
-			$( ".panel-body" ).empty();
-			
-			getUser().then(function(response) {
-				  if (response) {
-					  saveUser();
-				  } else {
-				  }
-				}).catch(function(e) {
-				  console.error('Error!');
-				  console.error(e);
-				});
+			if( $("#myId").val().length > 0)
+				{
+					$( ".panel-body" ).empty();
+					
+					getUser().then(function(response) {
+						  if (response) {
+							  saveUser();
+						  } else {
+							  var user = true;
+							  refreshMap();
+							  refreshUserData()
+							  getUserLocation(loggedUser,map,user);
+						  }
+						}).catch(function(e) {
+						  console.error('Error!');
+						  console.error(e);
+						});
+				}
+			else
+				{
+					alert("Enter your ID!")
+				}
 		}
 	);
 
 $("#sendReq").click(function()
-		{	
-			getRequest().then(function(response) {
-				  if (response) {
-					  saveRequest();
-				  } else {
-				  }
-				}).catch(function(e) {
-				  console.error('Error!');
-				  console.error(e);
-				});
+		{
+			if( loggedUser )
+			{
+				if( ( $("#request").val().length > 0 ) )
+				{
+					getRequest().then(function(response) {
+						  if (response) {
+							  saveRequest();
+						  } else {
+						  }
+						}).catch(function(e) {
+						  console.error('Error!');
+						  console.error(e);
+						});
+				}
+				else
+				{
+					alert("Enter for whom to send request!");
+				}
+			}
+			else
+			{
+				alert("Log in first!");
+			}
 		}
 	);
 
 $("#refreshRequests").click(function()
 		{
-			populateRequests();
+			if( loggedUser )
+			{
+				populateRequests();
+			}
+			else
+			{
+				alert("Log in first!");
+			}
 		}
 	);
 
 $("#refreshSubscriptions").click(function()
 		{
-			populateSubscribers();
+			if( loggedUser )
+			{
+				populateSubscribers(map);
+			}
+			else
+			{
+				alert("Log in first!");
+			}
 		}
 	);
 
@@ -79,7 +143,7 @@ $("#denyRequest").click(function()
 		
 		var arrayLength = selectedReqs.length;
 		
-		if( !selectedReqs )
+		if( arrayLength == 0 )
 			{
 				alert("Select request!");
 			}
@@ -125,6 +189,21 @@ $("#approveRequest").click(function()
 		}
 	);
 
+}
+
+function refreshMap()
+{
+  map=makeMap("map",1,0.0,0.0);	//make Google map
+  markerUser=makeMarker(map,0.0,0.0);	//make marker on map, keeping reference	
+}
+
+function refreshUserData()
+{
+	$("#requests").empty();
+	$("#subscriptions").empty();
+	
+    document.getElementById("latitude").value = "";
+    document.getElementById("longitude").value = "";
 }
 
 function getSubscription(id)
@@ -223,6 +302,7 @@ return new Promise(function(resolve, reject) {
         loggedUser=jsonData["id"];
   		$( ".panel-body" ).append( "User: " +loggedUser+"" )
   		alert("User Logged In: "+jsonData["id"]+" ");
+  		
         resolve(false);
       }
     }).fail(reject);
@@ -280,7 +360,7 @@ $.getJSON(url,
 	);
 }
 
-function populateSubscribers()
+function populateSubscribers(map)
 {
 var url=baseURL+"/user/subscribedto/"+loggedUser;
 
@@ -307,11 +387,30 @@ $.getJSON(url,
 						var htmlCode="<div id="+id+" class='radio'><label><input id="+id+" type='radio' name='optradio'>"+id+" (requested at:"+date+")</label></div>";
 	
 						$("#subscriptions").append(htmlCode);
+						
 				}
-				
-				$("#subscriptions input[name='optradio']").click(function()
+						var IDs = [];
+						$("#subscriptions").find("input").each(function(){ IDs.push(this.id); });
+						
+						var arrayLength = IDs.length;
+						for( var i = 0; i < arrayLength; i++)
 						{
-							getUserLocation($(this).attr("id"));
+							var user = false;
+							getUserLocation(IDs[i],map,user);
+						}
+										
+						$("#subscriptions input[name='optradio']").click(function()
+						{
+							var markersLenght = markers.length;
+							for( var k = 0; k < markersLenght; k++)
+								{
+									if( $(this).attr("id") == markers[k].getTitle())
+										{
+											map.panTo(markers[k].getPosition());
+											map.setZoom(8);
+
+										}
+								}
 						}
 				);
 			}
@@ -319,37 +418,48 @@ $.getJSON(url,
 	);
 }
 
-function getUserLocation(id)
+function addMarker(latitude,longitude, map, id) {
+
+	var location=new google.maps.LatLng(latitude,longitude);	//create location from coordinates
+	var marker=new google.maps.Marker({	"position":location,	//mark options as a map
+										"map":map,
+										"title": id,
+										"label": id });
+	
+	return marker;
+}
+
+function getUserLocation(id,map,user)
 {
 
 var url=baseURL+"/user/location/"+id;
 
 $.getJSON(	url,
 		function(jsonData)
-		{
+		{	
 		if( !jsonData )
 			{
 			alert("This user haven't checked in yet!")
 			}
 		else
 			{
-			alert("awdawadd");
-			alert(jsonData);
-		//	var fields = jsonData.split(',');
-		//	alert(fields);
+			var latitude = jsonData["latitude"];
+			var longitude = jsonData["longitude"];
+			
+			var latv=parseFloat(latitude);
+			var lonv=parseFloat(longitude);
+
+			if( user == false )
+				{
+					var marker = addMarker(latv,lonv,map,id);
+					markers.push(marker);
+				}
+			else
+				{
+					var location=new google.maps.LatLng(latv,lonv);
+					markerUser.setPosition(location);
+				}
 			}
-		
-//		var fields = jsonData.split(',');
-//		alert(fields);
-//		var longitude=fields[0];
-//		var latitude=fields[1];
-//		
-//		var latv=parseFloat(latitude);
-//		var lonv=parseFloat(longitude);
-//		
-//		myLatlng = new google.maps.LatLng(latv,lonv);
-//		
-//		marker.setPosition(myLatlng);
 		}
 	);
 }
@@ -407,6 +517,7 @@ function makeMarker(map,longitude,latitude)
 var location=new google.maps.LatLng(latitude,longitude);	//create location from coordinates
 var marker=new google.maps.Marker({	"position":location,	//mark options as a map
 									"map":map,
+									"icon":'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
 									"draggable":true});
 
 google.maps.event.addListener(marker, 'click', function (event) {

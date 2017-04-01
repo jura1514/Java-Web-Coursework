@@ -1,4 +1,4 @@
-package cmm529.cw.resource;
+package cmm529.cw.user;
 
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -11,26 +11,18 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.amazonaws.services.dynamodbv2.*;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.transactions.TransactionManager;
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import cmm529.coursework.friend.model.*;
-import cmm529.cw.DynamoDBUtil;
-import cmm529.cw.ErrorExceptions;
+import cmm529.cw.addon.DynamoDBUtil;
+import cmm529.cw.addon.ErrorExceptions;
 
 
 @Path("/user")
-public class CourseworkServlet {
+public class UserResource {
 	
 	@Path("/{id}")
 	@GET
@@ -165,22 +157,18 @@ public class CourseworkServlet {
 	@Path("/location/{id}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getLocationString(@PathParam("id") String id)
+	public Location getLocationString(@PathParam("id") String id)
 	{
 	DynamoDBMapper mapper=DynamoDBUtil.getMapper();
 	User user=mapper.load(User.class,id);
 	
-	LocationTypeConverter locConverter = new LocationTypeConverter();
-	String locString;
-	
-	locString = locConverter.convert(user.getLocation());
+	Location loc = user.getLocation();
 
-	if( locString.isEmpty())
+	if( loc == null )
 	{
 		throw new WebApplicationException(404);
 	}
 	
-	return locString;
+	return loc;
 	}
-	
 }

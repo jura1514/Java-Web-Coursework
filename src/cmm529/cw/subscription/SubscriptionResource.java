@@ -12,10 +12,8 @@ import javax.ws.rs.core.Response;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 
 import cmm529.coursework.friend.model.Subscription;
-import cmm529.coursework.friend.model.SubscriptionRequest;
-import cmm529.coursework.friend.model.User;
-import cmm529.cw.DynamoDBUtil;
-import cmm529.cw.ErrorExceptions;
+import cmm529.cw.addon.DynamoDBUtil;
+import cmm529.cw.addon.ErrorExceptions;
 
 @Path("/subscription")
 public class SubscriptionResource {
